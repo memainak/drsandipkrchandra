@@ -1196,9 +1196,6 @@
       }
     }
   </style>
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 </head>
 
 <body>
@@ -1359,7 +1356,8 @@
     <div class="specialties-grid">
 
       <div class="specialty-card">
-        <img src="images/diabetes_management_1776879701927.png" alt="Diabetes Management" class="spec-img animate-float">
+        <img src="images/diabetes_management_1776879701927.png" alt="Diabetes Management"
+          class="spec-img animate-float">
         <div class="spec-content">
           <div class="spec-icon-box">
             <svg viewBox="0 0 24 24">
@@ -1388,7 +1386,8 @@
       </div>
 
       <div class="specialty-card">
-        <img src="images/infection_treatment_1776879720162.png" alt="Typhoid & Infections" class="spec-img animate-float">
+        <img src="images/infection_treatment_1776879720162.png" alt="Typhoid & Infections"
+          class="spec-img animate-float">
         <div class="spec-content">
           <div class="spec-icon-box">
             <svg viewBox="0 0 24 24">
@@ -1664,7 +1663,8 @@
 
       <div class="modal-video-container">
         <!-- Replace YOUR_VIDEO_ID with your actual YouTube video ID -->
-        <iframe id="modalYoutube" src="https://www.youtube.com/embed/Krb_6B0zWIE?autoplay=1&mute=1&enablejsapi=1&origin=https://drsandipchandra.com"
+        <iframe id="modalYoutube"
+          src="https://www.youtube.com/embed/Krb_6B0zWIE?autoplay=1&mute=1&enablejsapi=1"
           title="Dr. Sandip Kumar Chandra - Introduction"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowfullscreen></iframe>
@@ -1738,7 +1738,18 @@
       }
     });
 
-    // Firebase Configuration
+    // Auto-open on load
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(openModal, 1500); // Opens after 1.5 seconds
+    });
+
+  </script>
+
+  <!-- Firebase v9 Modular SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore.js";
+
     const firebaseConfig = {
       apiKey: "AIzaSyCULLbQQcNPIDwHBRffqLdrlC4jBypxtqA",
       authDomain: "drsandipkrchandra.firebaseapp.com",
@@ -1748,52 +1759,40 @@
       appId: "1:797160455400:web:ea572c6382feb575521d5d",
       measurementId: "G-T080GBX9MZ"
     };
-    
-    // Initialize Firebase
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
-    const db = firebase.firestore();
 
-    // Auto-open on load
-    window.addEventListener('DOMContentLoaded', () => {
-      setTimeout(openModal, 1500); // Opens after 1.5 seconds
-    });
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-    sendWhatsapp.addEventListener('click', () => {
+    const sendWhatsapp = document.getElementById('sendWhatsapp');
+    const queryModal = document.getElementById('queryModal');
+
+    sendWhatsapp.addEventListener('click', async () => {
       const name = document.getElementById('userName').value || 'Not provided';
       const age = document.getElementById('userAge').value || 'Not provided';
       const phone = document.getElementById('userPhone').value || 'Not provided';
       const issue = document.getElementById('userIssue').value || 'None';
 
-      // Database Storage (Firestore)
-      const appointmentData = {
-        name,
-        age,
-        phone,
-        issue,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-      };
-
-      db.collection('appointments').add(appointmentData)
-        .then((docRef) => {
-          console.log('Document written with ID: ', docRef.id);
-        })
-        .catch((error) => {
-          console.error('Error adding document: ', error);
-          // Fallback to LocalStorage if Firebase fails
-          let allAppointments = JSON.parse(localStorage.getItem('appointments') || '[]');
-          allAppointments.push({ ...appointmentData, timestamp: new Date().toISOString() });
-          localStorage.setItem('appointments', JSON.stringify(allAppointments));
+      try {
+        await addDoc(collection(db, "appointments"), {
+          name,
+          age,
+          phone,
+          issue,
+          timestamp: serverTimestamp()
         });
+        console.log("Appointment saved to Firebase!");
+      } catch (e) {
+        console.error("Error adding document: ", e);
+        alert("Firebase Error: " + e.message);
+      }
 
       // WhatsApp Redirection
       const message = `Hello Dr. Sandip, I want to book an Appointment.\n\n*Name:* ${name}\n*Age:* ${age}\n*Phone:* ${phone}\n*Concern:* ${issue}`;
       const whatsappUrl = `https://wa.me/919051655991?text=${encodeURIComponent(message)}`;
-
       window.open(whatsappUrl, '_blank');
       queryModal.classList.remove('active');
     });
+  </script>
 
     // Animate cards on scroll
     const cards = document.querySelectorAll('.specialty-card');
